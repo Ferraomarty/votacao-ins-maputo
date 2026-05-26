@@ -241,6 +241,7 @@ main{max-width:1000px;margin:0 auto;padding:2rem 1.5rem;position:relative;z-inde
         <li style="font-size:13.5px;line-height:1.6;opacity:.93"><strong>Áreas temáticas</strong> — A votação está organizada em 7 áreas temáticas: Praias, Animais, Monumentos &amp; Tradições, Rios, Nomes Locais, Flores &amp; Árvores e Frutos.</li>
         <li style="font-size:13.5px;line-height:1.6;opacity:.93"><strong>Escolha múltipla</strong> — Em cada área temática é permitido seleccionar uma ou mais opções. Podes também votar em áreas temáticas diferentes em simultâneo.</li>
         <li style="font-size:13.5px;line-height:1.6;opacity:.93"><strong>Comentários</strong> — Em cada área temática existe uma secção de comentários. Usa-a para justificar a tua escolha, sugerir alterações ou partilhar a tua opinião.</li>
+        <li style="font-size:13.5px;line-height:1.6;opacity:.93"><strong>Limite de votos</strong> — Cada votante pode seleccionar no máximo <strong>7 opções no total</strong>, distribuídas livremente pelas 7 áreas temáticas.</li>
       </ol>
     </div>
 
@@ -397,13 +398,24 @@ function showChip(){document.getElementById('vname').textContent=voterName;docum
 function needName(){if(!voterName){toast('Indica o teu nome primeiro.');return true;}return false;}
 
 /* ── VOTE ── */
+const MAX_VOTES=7;
+function totalVotes(){return Object.values(myVotes).reduce((a,v)=>a+(Array.isArray(v)?v.length:0),0);}
+
 function castVote(themeId,optIdx){
   if(needName())return;
   if(submitted){toast('Votação já submetida.');return;}
   if(!Array.isArray(myVotes[themeId])) myVotes[themeId]=[];
   const arr=myVotes[themeId];
   const pos=arr.indexOf(optIdx);
-  if(pos>=0) arr.splice(pos,1); else arr.push(optIdx);
+  if(pos>=0){
+    arr.splice(pos,1);
+  } else {
+    if(totalVotes()>=MAX_VOTES){
+      toast('Limite atingido — máximo de '+MAX_VOTES+' votos no total.');
+      return;
+    }
+    arr.push(optIdx);
+  }
   if(arr.length===0) delete myVotes[themeId];
   localStorage.setItem('ins_v4',JSON.stringify(myVotes));
   renderVote();schedSave();
@@ -437,7 +449,8 @@ function renderVote(){
   const done=Object.keys(myVotes).filter(k=>Array.isArray(myVotes[k])?myVotes[k].length>0:myVotes[k]!==undefined).length;
   if(voterName){document.getElementById('prog').style.display='flex';}
   document.getElementById('pfill').style.width=Math.round(done/THEMES.length*100)+'%';
-  document.getElementById('plbl').textContent=done+' de '+THEMES.length+' temas votados';
+  const tv=Object.values(myVotes).reduce((a,v)=>a+(Array.isArray(v)?v.length:0),0);
+  document.getElementById('plbl').textContent=done+' de '+THEMES.length+' temas votados · '+tv+' / '+MAX_VOTES+' opções seleccionadas';
   const sb=document.getElementById('submit-box');
   sb.style.display=voterName&&done>0?'block':'none';
   if(submitted){document.getElementById('btn-sub').style.display='none';document.getElementById('sub-ok').style.display='flex';}
@@ -457,6 +470,7 @@ function renderVote(){
           ${myArr.length>0
             ? `<span class="theme-chosen" style="background:${th.bg};color:${th.color}">${myArr.map(i=>th.opts[i]).join(' · ')}</span>`
             : `<span class="theme-hint">Selecciona uma ou mais opções abaixo</span>`}
+        <span style="font-size:12px;color:rgba(255,255,255,.7);margin-left:auto;white-space:nowrap;">${Object.values(myVotes).reduce((a,v)=>a+(Array.isArray(v)?v.length:0),0)} / ${MAX_VOTES} votos usados</span>
         </div>
       </div>
       <div class="opts-grid" ${lock}>
