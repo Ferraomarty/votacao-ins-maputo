@@ -124,9 +124,34 @@ main{max-width:1000px;margin:0 auto;padding:2rem 1.5rem;position:relative;z-inde
 @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
 
 .stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:2rem;}
-.stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);}
-.stat-v{font-family:"Lora",serif;font-size:30px;font-weight:600;}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:4px;}
+.stat-v{font-family:"Lora",serif;font-size:32px;font-weight:600;}
 .stat-l{font-size:12px;color:var(--muted);margin-top:3px;}
+.stat-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:6px;}
+
+/* WINNERS SUMMARY */
+.winners-summary{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-bottom:2rem;}
+.winner-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);border-top:4px solid;}
+.winner-card-theme{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;opacity:.8;}
+.winner-card-name{font-family:"Lora",serif;font-size:18px;font-weight:600;margin-bottom:4px;}
+.winner-card-votes{font-size:13px;color:var(--muted);}
+.winner-card-bar{height:5px;border-radius:99px;margin-top:8px;overflow:hidden;background:var(--border);}
+.winner-card-fill{height:100%;border-radius:99px;}
+
+/* RANK TABLE */
+.rank-table{width:100%;border-collapse:collapse;font-size:13px;}
+.rank-table th{padding:10px 14px;text-align:left;border-bottom:2px solid var(--border);font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;background:var(--bg);}
+.rank-table td{padding:10px 14px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.rank-table tr:last-child td{border-bottom:none;}
+.rank-table tr:hover td{background:rgba(26,107,122,.02);}
+.rank-num{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;}
+.rank-bar-w{width:120px;height:8px;background:var(--border);border-radius:99px;overflow:hidden;}
+.rank-bar-f{height:100%;border-radius:99px;}
+.rank-pct{font-size:12px;font-weight:600;min-width:40px;text-align:right;}
+
+/* SECTION HEADER */
+.dash-section-title{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin:2rem 0 1rem;display:flex;align-items:center;gap:10px;}
+.dash-section-title::after{content:"";flex:1;height:1.5px;background:var(--border);}
 
 .charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:2rem;}
 @media(max-width:640px){.charts-grid{grid-template-columns:1fr;}}
@@ -159,7 +184,7 @@ main{max-width:1000px;margin:0 auto;padding:2rem 1.5rem;position:relative;z-inde
 .res-opts{padding:12px 20px;display:flex;flex-direction:column;gap:7px;}
 .res-row{display:flex;align-items:center;gap:10px;}
 .res-name-opt{font-size:13px;flex:1;font-weight:500;}
-.res-bar-w{width:140px;height:7px;background:var(--border);border-radius:99px;overflow:hidden;flex-shrink:0;}
+.res-bar-w{flex:1;min-width:80px;height:7px;background:var(--border);border-radius:99px;overflow:hidden;}
 .res-bar-f{height:100%;border-radius:99px;}
 .res-votes{font-size:12px;color:var(--muted);min-width:55px;text-align:right;}
 
@@ -281,11 +306,17 @@ main{max-width:1000px;margin:0 auto;padding:2rem 1.5rem;position:relative;z-inde
     <p id="dash-p">Resultados em tempo real de todos os votantes.</p>
     <div class="live-pill"><div class="live-dot"></div>Actualização automática</div>
   </div>
+  <!-- Stats -->
   <div class="stats" id="dash-stats"></div>
+
+  <!-- Winners summary cards -->
+  <div class="dash-section-title" id="winners-title" style="display:none">Opção vencedora por área temática</div>
+  <div class="winners-summary" id="winners-summary" style="display:none"></div>
+
+  <!-- Charts -->
   <div class="charts-grid" id="dash-charts" style="display:none">
     <div class="chart-box"><h3>Votos por área temática</h3><div class="chart-h"><canvas id="ch-themes"></canvas></div></div>
-    <div class="chart-box"><h3>Participação geral</h3><div class="chart-h"><canvas id="ch-donut"></canvas></div></div>
-    <div class="chart-box chart-full"><h3>Opção mais votada por tema</h3><div class="chart-h"><canvas id="ch-winners"></canvas></div></div>
+    <div class="chart-box"><h3>Submetidos vs Em curso</h3><div class="chart-h"><canvas id="ch-donut"></canvas></div></div>
   </div>
   <div class="auth-box" id="auth-box" style="display:none">
     <div class="auth-icon"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="#1A6B7A" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path stroke-linecap="round" d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
@@ -508,24 +539,49 @@ function renderDash(){
   document.getElementById('dash-charts').style.display=has?'grid':'none';
   document.getElementById('auth-box').style.display=has?'flex':'none';
   document.getElementById('dash-results').style.display=has?'block':'none';
+  document.getElementById('winners-summary').style.display=has?'grid':'none';
+  document.getElementById('winners-title').style.display=has?'flex':'none';
 
   const totalVoters=allData.length;
   const totalVotes=allData.reduce((a,d)=>a+Object.keys(d.votes||{}).length,0);
   const sub_n=allData.filter(d=>d.submitted).length;
+  const pending_n=totalVoters-sub_n;
+  const pctSub=totalVoters>0?Math.round(sub_n/totalVoters*100):0;
   const totalCmt=allData.reduce((a,d)=>a+Object.values(d.comments||{}).reduce((b,c)=>b+c.length,0),0);
+  const avgVotes=totalVoters>0?Math.round(totalVotes/totalVoters*10)/10:0;
 
-  document.getElementById('dash-p').textContent=`${totalVoters} votante(s) · ${totalVotes} votos · ${new Date().toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'})}`;
-  document.getElementById('dash-stats').innerHTML=!has?'<div style="color:var(--muted);padding:2rem">Ainda sem votos.</div>':`
-    <div class="stat"><div class="stat-v">${totalVoters}</div><div class="stat-l">Votantes</div></div>
-    <div class="stat"><div class="stat-v">${sub_n}</div><div class="stat-l">Submetidos</div></div>
-    <div class="stat"><div class="stat-v">${totalVotes}</div><div class="stat-l">Total votos</div></div>
-    <div class="stat"><div class="stat-v">${totalCmt}</div><div class="stat-l">Comentários</div></div>`;
+  document.getElementById('dash-p').textContent=
+    `${totalVoters} participante(s) · ${sub_n} submetidos (${pctSub}%) · actualizado às ${new Date().toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'})}`;
 
-  if(!has)return;
+  document.getElementById('dash-stats').innerHTML=!has?
+    `<div style="color:var(--muted);padding:2rem;text-align:center;grid-column:1/-1">Ainda sem votos registados.</div>`:
+    `<div class="stat">
+        <div class="stat-icon" style="background:#E6F1FB"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#1E4D8C" stroke-width="2"><path stroke-linecap="round" d="M17 20h5v-2a3 3 0 0 0-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 0 1 5.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 0 1 9.288 0"/></svg></div>
+        <div class="stat-v">${totalVoters}</div><div class="stat-l">Participantes</div>
+      </div>
+      <div class="stat">
+        <div class="stat-icon" style="background:#E4F3EF"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#1B6B5A" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/></svg></div>
+        <div class="stat-v" style="color:#1B6B5A">${sub_n}</div><div class="stat-l">Submetidos (${pctSub}%)</div>
+      </div>
+      <div class="stat">
+        <div class="stat-icon" style="background:#FAEAEE"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#C4234A" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/></svg></div>
+        <div class="stat-v" style="color:#C4234A">${pending_n}</div><div class="stat-l">Em curso</div>
+      </div>
+      <div class="stat">
+        <div class="stat-icon" style="background:#FEF6E4"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#92600A" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 1 1 3 0m-3 6a1.5 1.5 0 0 0 3 0m0 0V8m0 3.5v-1a1.5 1.5 0 0 1 3 0v1m0 0V8m0 3.5a1.5 1.5 0 0 0 3 0V8"/></svg></div>
+        <div class="stat-v">${totalVotes}</div><div class="stat-l">Total de votos</div>
+      </div>
+      <div class="stat">
+        <div class="stat-icon" style="background:#F0EFFE"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#4A39A8" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125z"/></svg></div>
+        <div class="stat-v">${avgVotes}</div><div class="stat-l">Média por votante</div>
+      </div>
+      <div class="stat">
+        <div class="stat-icon" style="background:#F9EDF3"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#8C2D5C" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 0 1 .865-.501 48.172 48.172 0 0 0 3.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z"/></svg></div>
+        <div class="stat-v">${totalCmt}</div><div class="stat-l">Comentários</div>
+      </div>`;
 
-  // Aggregate: for each theme, count votes per option
-  const agg={}; // {themeId: {optIdx: count}}
-  const allCmts={}; // {themeId: [{a,t}]}
+  // Aggregate
+  const agg={};const allCmts={};
   THEMES.forEach(th=>{agg[th.id]={};allCmts[th.id]=[];});
   allData.forEach(d=>{
     Object.entries(d.votes||{}).forEach(([tid,val])=>{
@@ -538,30 +594,43 @@ function renderDash(){
     });
   });
 
-  // Chart 1: total votes per theme
+  // Winners summary cards
+  const wSummary=document.getElementById('winners-summary');
+  wSummary.innerHTML=THEMES.map(th=>{
+    const o=agg[th.id]||{};
+    const total=Object.values(o).reduce((a,b)=>a+b,0);
+    const max=Math.max(...Object.values(o),0);
+    const winIdx=max>0?parseInt(Object.keys(o).find(k=>o[k]===max)):-1;
+    const pct=total>0?Math.round(max/total*100):0;
+    return`<div class="winner-card" style="border-top-color:${th.color}">
+      <div class="winner-card-theme" style="color:${th.color}">${th.name}</div>
+      ${winIdx>=0
+        ? `<div class="winner-card-name" style="color:${th.color}">&#9733; ${th.opts[winIdx]}</div>
+           <div class="winner-card-votes">${max} voto${max!==1?'s':''} &nbsp;·&nbsp; ${pct}% do tema</div>
+           <div class="winner-card-bar"><div class="winner-card-fill" style="width:${pct}%;background:${th.color}"></div></div>`
+        : `<div class="winner-card-name" style="color:var(--muted);font-size:14px">Sem votos ainda</div>`}
+    </div>`;
+  }).join('');
+
+  // Chart 1: votes per theme
   const themeVotes=THEMES.map(th=>Object.values(agg[th.id]||{}).reduce((a,b)=>a+b,0));
   destroyChart('themes');
   charts.themes=new Chart(document.getElementById('ch-themes'),{type:'bar',
-    data:{labels:THEMES.map(t=>t.name),datasets:[{label:'Votos',data:themeVotes,backgroundColor:THEMES.map(t=>t.color),borderRadius:6}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
-      scales:{x:{grid:{display:false},ticks:{font:{family:'Outfit',size:11}}},y:{beginAtZero:true,ticks:{font:{family:'Outfit',size:11},stepSize:1},grid:{color:'rgba(0,0,0,.05)'}}}}});
+    data:{labels:THEMES.map(t=>t.name),datasets:[{label:'Votos',data:themeVotes,backgroundColor:THEMES.map(t=>t.color),borderRadius:8,borderSkipped:false}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' '+ctx.raw+' votos'}}},
+      scales:{x:{grid:{display:false},ticks:{font:{family:'Outfit',size:11}}},y:{beginAtZero:true,ticks:{font:{family:'Outfit',size:11},stepSize:1},grid:{color:'rgba(0,0,0,.04)'}}}}});
 
-  // Chart 2: donut - voted themes vs not
-  const votedThemes=THEMES.filter(th=>Object.keys(agg[th.id]||{}).length>0).length;
+  // Chart 2: submitted vs in progress
   destroyChart('donut');
   charts.donut=new Chart(document.getElementById('ch-donut'),{type:'doughnut',
-    data:{labels:['Temas com votos','Sem votos'],datasets:[{data:[votedThemes,THEMES.length-votedThemes],backgroundColor:['#1A6B7A','#D3D1C7'],borderWidth:0,hoverOffset:6}]},
-    options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{position:'bottom',labels:{font:{family:'Outfit',size:12},padding:14}}}}});
+    data:{labels:[`Submetidos (${sub_n})`,`Em curso (${pending_n})`],
+      datasets:[{data:[sub_n,pending_n],backgroundColor:['#1B6B5A','#C4234A'],borderWidth:0,hoverOffset:8}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'58%',
+      plugins:{legend:{position:'bottom',labels:{font:{family:'Outfit',size:13},padding:16}},
+        tooltip:{callbacks:{label:ctx=>` ${ctx.label}: ${Math.round(ctx.raw/totalVoters*100)}%`}}}}});
 
-  // Chart 3: winner per theme
-  const winVotes=THEMES.map(th=>{const o=agg[th.id]||{};return Math.max(...Object.values(o),0);});
-  destroyChart('winners');
-  charts.winners=new Chart(document.getElementById('ch-winners'),{type:'bar',
-    data:{labels:THEMES.map(t=>t.name),datasets:[{label:'Votos da opção mais votada',data:winVotes,backgroundColor:THEMES.map(t=>t.color),borderRadius:5}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
-      scales:{x:{grid:{display:false},ticks:{font:{family:'Outfit',size:11}}},y:{beginAtZero:true,ticks:{font:{family:'Outfit',size:11},stepSize:1},grid:{color:'rgba(0,0,0,.05)'}}}}});
-
-  // Results list
+  // Detailed results per theme
   let res='';
   THEMES.forEach(th=>{
     const o=agg[th.id]||{};
@@ -569,31 +638,50 @@ function renderDash(){
     const maxV=Math.max(...Object.values(o),0);
     const winIdx=maxV>0?parseInt(Object.keys(o).find(k=>o[k]===maxV)):-1;
     const cs=allCmts[th.id]||[];
+    const sortedOpts=[...th.opts.map((name,i)=>({name,i,v:o[i]||0}))].sort((a,b)=>b.v-a.v);
+
     res+=`<div class="res-card">
       <div class="res-hdr" style="border-left:5px solid ${th.color}">
         <div>
           <div class="res-name" style="color:${th.color}">${th.name}</div>
-          <div class="res-total">${total} voto${total!==1?'s':''}</div>
+          <div class="res-total">${total} voto${total!==1?'s':''} · ${totalVoters} participante${totalVoters!==1?'s':''}</div>
         </div>
-        ${winIdx>=0?`<span class="winner-tag" style="background:${th.bg};color:${th.color}">&#9733; ${th.opts[winIdx]}</span>`:'<span style="font-size:12px;color:var(--muted)">Sem votos</span>'}
+        ${winIdx>=0&&total>0
+          ? `<span class="winner-tag" style="background:${th.bg};color:${th.color}">&#9733; ${th.opts[winIdx]} &nbsp;(${maxV} voto${maxV!==1?'s':''})</span>`
+          : '<span style="font-size:12px;color:var(--muted)">Sem votos</span>'}
       </div>
-      <div class="res-opts">
-        ${th.opts.map((opt,i)=>{
-          const v=o[i]||0;
-          const pct=total>0?Math.round(v/total*100):0;
-          const isWin=i===winIdx&&total>0;
-          return`<div class="res-row">
-            <span class="res-name-opt" style="${isWin?`color:${th.color};font-weight:700`:''}">${isWin?'&#9733; ':''}${opt}</span>
-            <div class="res-bar-w"><div class="res-bar-f" style="width:${pct}%;background:${th.color};opacity:${isWin?1:.45}"></div></div>
-            <span class="res-votes">${v} ${total>0?'('+pct+'%)':''}</span>
-          </div>`;
-        }).join('')}
-        ${cs.length>0?`<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">${cs.map(c=>`<div style="font-size:12px;color:var(--muted);margin-bottom:3px"><strong style="color:var(--text)">${c.a}:</strong> ${c.t}</div>`).join('')}</div>`:''}
+      <div style="overflow-x:auto">
+        <table class="rank-table">
+          <thead><tr>
+            <th style="width:36px">#</th>
+            <th>Nome</th>
+            <th style="width:140px">Distribuição</th>
+            <th style="width:90px;text-align:right">Votos</th>
+          </tr></thead>
+          <tbody>
+            ${sortedOpts.map((opt,rank)=>{
+              const pct=total>0?Math.round(opt.v/total*100):0;
+              const isWin=opt.i===winIdx&&total>0;
+              const medal=rank===0&&total>0?'🥇':rank===1&&total>0?'🥈':rank===2&&total>0?'🥉':'';
+              return`<tr>
+                <td><div class="rank-num" style="background:${isWin?th.color:'var(--border)'};color:${isWin?'#fff':'var(--muted)'}">${rank+1}</div></td>
+                <td style="font-weight:${isWin?700:400};color:${isWin?th.color:'var(--text)'}">${medal} ${opt.name}</td>
+                <td><div class="rank-bar-w"><div class="rank-bar-f" style="width:${pct}%;background:${th.color};opacity:${isWin?1:.5}"></div></div></td>
+                <td style="text-align:right"><span class="rank-pct" style="color:${isWin?th.color:'var(--muted)'}">${opt.v} ${total>0?'('+pct+'%)':''}</span></td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
       </div>
+      ${cs.length>0?`<div style="padding:12px 18px;border-top:1px solid var(--border)">
+        <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">Comentários (${cs.length})</div>
+        ${cs.map(c=>`<div style="font-size:13px;margin-bottom:6px;padding:8px 12px;background:var(--bg);border-radius:8px;border-left:3px solid ${th.color}"><strong style="color:${th.color}">${c.a}:</strong> <span style="color:var(--muted)">${c.t}</span></div>`).join('')}
+      </div>`:''}
     </div>`;
   });
   document.getElementById('res-list').innerHTML=res;
 }
+
 function destroyChart(k){if(charts[k]){charts[k].destroy();delete charts[k];}}
 
 /* ── TABS ── */
